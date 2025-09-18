@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal Boolean Search Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .concept-group {
+            transition: all 0.3s ease-in-out;
+        }
+        .remove-btn {
+            transition: opacity 0.2s ease-in-out;
+        }
+        .group-connector {
+            flex-shrink: 0;
+        }
+        .truncation-helper {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease-in-out;
+        }
+        .truncation-helper.active {
+            max-height: 150px; /* Adjust as needed */
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Legal Boolean Search Builder</h1>
+            <p class="text-md text-gray-600 mt-2">Create precise legal search strings, step-by-step.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left Column: Input Controls -->
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-800">1. Build Your Concepts</h2>
+                <p class="text-sm text-gray-600 -mt-2 mb-4">A concept is a main idea, party, action, or legal issue. Group synonyms for the same concept together (e.g., `spectator` OR `fan`).</p>
+                <div id="concept-container" class="space-y-6">
+                    <!-- Concept groups will be dynamically inserted here -->
+                </div>
+                <button id="add-concept-btn" class="mt-6 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    + Add Concept Group
+                </button>
+            </div>
+
+            <!-- Right Column: Output & Tips -->
+            <div class="sticky top-8 self-start">
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
+                    <h2 class="text-2xl font-semibold mb-4 text-gray-800">2. Your Search String</h2>
+                    <p class="text-sm text-gray-600 -mt-2 mb-4">Copy the final string and paste it into the advanced search bar of a legal database like Westlaw, Lexis, or Bloomberg Law.</p>
+                    <div class="relative">
+                        <div id="output-string" class="w-full bg-gray-100 text-gray-700 p-4 rounded-lg text-lg font-mono break-words min-h-[100px] border border-gray-300"></div>
+                        <button id="copy-btn" class="absolute top-3 right-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-3 rounded-md text-sm transition duration-300">Copy</button>
+                    </div>
+                     <p id="copy-feedback" class="text-green-600 text-sm mt-2 h-4 transition-opacity duration-300 opacity-0">Copied to clipboard!</p>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 mt-6">
+                    <div class="flex items-center mb-3">
+                        <h3 class="text-xl font-semibold text-gray-800">Review Your String</h3>
+                    </div>
+                    <p class="text-sm text-gray-600 -mt-2 mb-3">A final check is crucial. The ultimate check is to run the search and see if you are getting expected results. If anything seems off, or if you just want to be sure, use this checklist:</p>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <input id="check-grouping" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 flex-shrink-0">
+                            <label for="check-grouping" class="ml-3 text-sm text-gray-700"><strong>Grouping:</strong> Are my `()` correctly separating each unique concept?</label>
+                        </div>
+                        <div class="flex items-start">
+                            <input id="check-synonyms" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 flex-shrink-0">
+                            <label for="check-synonyms" class="ml-3 text-sm text-gray-700"><strong>Synonyms:</strong> Have I included all relevant alternate terms with `OR`?</label>
+                        </div>
+                        <div class="flex items-start">
+                            <input id="check-truncation" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 flex-shrink-0">
+                            <label for="check-truncation" class="ml-3 text-sm text-gray-700"><strong>Truncation:</strong> Is my use of `!` capturing the right word endings without being too broad (e.g., `defen!` is better than `def!`) or too narrow (e.g., `assum!` is better than `assump!`)?</label>
+                        </div>
+                        <div class="flex items-start">
+                            <input id="check-connectors" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 flex-shrink-0">
+                            <label for="check-connectors" class="ml-3 text-sm text-gray-700"><strong>Connectors:</strong> Is the main connector (`AND`, `/p`, `/s`) linking my concepts appropriately for the results I need?</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const conceptContainer = document.getElementById('concept-container');
+        const addConceptBtn = document.getElementById('add-concept-btn');
+        const outputString = document.getElementById('output-string');
+        const copyBtn = document.getElementById('copy-btn');
+        const copyFeedback = document.getElementById('copy-feedback');
+
+        let conceptId = 0;
+
+        const findCommonPrefix = (strs) => {
+            if (!strs || strs.length === 0) return "";
+            strs = strs.filter(s => s && typeof s === 'string');
+            if (strs.length < 2) return strs.length === 1 ? strs[0] : "";
+            strs.sort();
+            const firstStr = strs[0];
+            const lastStr = strs[strs.length - 1];
+            let i = 0;
+            while (i < firstStr.length && i < lastStr.length && firstStr[i] === lastStr[i]) {
+                i++;
+            }
+            return firstStr.substring(0, i);
+        };
+
+        const createConceptGroup = () => {
+            conceptId++;
+            const groupId = `group-${conceptId}`;
+
+            const groupWrapper = document.createElement('div');
+            groupWrapper.id = groupId;
+            groupWrapper.className = 'concept-group bg-gray-50 p-4 rounded-xl border border-gray-200';
+            
+            if (conceptId > 1) {
+                const connectorHtml = `
+                    <div class="my-4 p-4 rounded-lg bg-blue-50 border border-blue-200 text-center group-connector">
+                        <div class="flex items-center justify-center mb-2">
+                            <label class="block text-sm font-bold text-gray-700">Choose how to connect concepts:</label>
+                            
+                            <div class="relative flex items-center ml-2 group">
+                                <button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button>
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10">
+                                    <p class="font-bold mb-1 text-sm">Connector Strategy</p>
+                                    <p class="mb-2">How closely do you want the concepts to appear in a document?</p>
+                                    <ul class="list-none space-y-1">
+                                        <li><strong>AND:</strong> Broadest search. Good for unique terms.</li>
+                                        <li><strong>/p (paragraph):</strong> Good balance. Finds concepts discussed together.</li>
+                                        <li><strong>/s (sentence):</strong> Most restrictive. Finds concepts that are very closely linked.</li>
+                                    </ul>
+                                    <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <select class="connector-select bg-white border-gray-300 text-gray-900 text-sm font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-auto p-2.5 mx-auto">
+                            <option value="AND" selected>AND</option>
+                            <option value="/p">/p (same paragraph)</option>
+                            <option value="/s">/s (same sentence)</option>
+                        </select>
+                    </div>
+                `;
+                const lastGroup = conceptContainer.lastElementChild;
+                if (lastGroup) {
+                    lastGroup.insertAdjacentHTML('afterend', connectorHtml);
+                }
+            }
+
+            const groupHtml = `
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-lg font-semibold text-gray-700">Concept ${conceptId}</h3>
+                    <button class="remove-group-btn text-red-500 hover:text-red-700 font-semibold text-sm opacity-50 hover:opacity-100" data-group-id="${groupId}">Remove</button>
+                </div>
+                 <div class="flex items-start text-xs text-gray-500 mb-3 -mt-2">
+                    <p>
+
+Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, injured, etc.). <br>For help with truncation (e.g., finding the right word root), click the <strong>(!)</strong> button next to any term.</p>
+                </div>
+                <div class="space-y-2 synonym-inputs">
+                    <!-- Term inputs will be generated here -->
+                </div>
+                <div class="flex items-center mt-3">
+                    <button class="add-synonym-btn text-sm font-medium text-blue-600 hover:text-blue-800">+ Add alternate term (OR)</button>
+                    <div class="relative flex items-center ml-2 group">
+                        <button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button>
+                        <div class="absolute top-full left-0 mt-2 w-64 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10">
+                            <p class="font-bold mb-1 text-sm">Brainstorming Terms</p>
+                            <p>Consider adding:</p>
+                            <ul class="list-disc list-inside pl-2 mt-1 space-y-1">
+                                <li><strong>Synonyms:</strong> e.g., child OR minor OR infant</li>
+                                <li><strong>Broader terms:</strong> e.g., car OR vehicle</li>
+                                <li><strong>Specific examples:</strong> e.g., "social media" OR twitter OR facebook OR snapchat</li>
+                                <li><strong>Narrower terms:</strong> e.g., accident OR "slip and fall"</li>
+                                <li><strong>Related concepts:</strong> e.g., marriage OR divorce</li>
+                            </ul>
+                            <svg class="absolute text-gray-800 h-2 w-full left-0 bottom-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,255 127.5,127.5 255,255"/></svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+            groupWrapper.innerHTML = groupHtml;
+            addTermInput(groupWrapper.querySelector('.synonym-inputs'), true); // Add the first term input
+            conceptContainer.appendChild(groupWrapper);
+            
+            groupWrapper.querySelector('.add-synonym-btn').addEventListener('click', () => addTermInput(groupWrapper.querySelector('.synonym-inputs'), false));
+            groupWrapper.querySelector('.remove-group-btn').addEventListener('click', (e) => removeConceptGroup(e.target.dataset.groupId));
+
+            updateSearchString();
+        };
+        
+        const addTermInput = (container, isFirst = false) => {
+            const termWrapper = document.createElement('div');
+            termWrapper.className = 'term-wrapper';
+            
+            const inputWrapperClass = isFirst ? '' : 'space-x-2';
+            termWrapper.innerHTML = `
+                <div class="flex items-center ${inputWrapperClass}">
+                    ${isFirst ? '' : '<button class="remove-synonym-btn text-gray-400 hover:text-gray-600 p-1 remove-btn">&times;</button>'}
+                    <div class="relative flex-grow flex items-center">
+                        <input type="text" class="concept-input w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400" placeholder="${isFirst ? 'Enter term or phrase' : 'Alternate term'}">
+                        <div class="phrase-suggester-container absolute right-10 top-1/2 -translate-y-1/2"></div>
+                        <button class="truncation-toggle-btn absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold hover:bg-gray-300">(!)</button>
+                    </div>
+                </div>
+                <div class="truncation-helper bg-gray-100 rounded-md border border-gray-200">
+                    <input type="text" class="truncation-variants-input w-full p-1.5 border border-gray-300 rounded-md text-sm" placeholder="Enter variations (e.g., assume, assumed)...">
+                    <div class="truncation-suggester-container mt-2"></div>
+                </div>
+            `;
+            container.appendChild(termWrapper);
+
+            const inputElement = termWrapper.querySelector('.concept-input');
+            const toggleBtn = termWrapper.querySelector('.truncation-toggle-btn');
+            const helper = termWrapper.querySelector('.truncation-helper');
+            const variantsInput = termWrapper.querySelector('.truncation-variants-input');
+
+            inputElement.addEventListener('input', (e) => {
+                updateSearchString();
+                handlePhraseSuggestions(e.target);
+            });
+            
+            toggleBtn.addEventListener('click', () => helper.classList.toggle('active'));
+
+            variantsInput.addEventListener('input', () => {
+                const suggesterContainer = helper.querySelector('.truncation-suggester-container');
+                suggesterContainer.innerHTML = ''; // Clear old suggestions
+
+                const originalTerm = inputElement.value.trim().toLowerCase();
+                const variants = variantsInput.value.trim().toLowerCase().split(/[\s,]+/).filter(Boolean);
+                const allTerms = [originalTerm, ...variants];
+
+                if (allTerms.length >= 2) {
+                    const prefix = findCommonPrefix(allTerms);
+                    if (prefix.length > 2) {
+                        const suggestion = prefix + '!';
+                        const suggestionBtn = document.createElement('button');
+                        suggestionBtn.className = "text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-md px-3 py-1.5 transition-all w-full text-left";
+                        suggestionBtn.innerHTML = `Use suggested root: <strong class="font-semibold">${suggestion}</strong>`;
+                        suggestionBtn.onclick = () => {
+                            inputElement.value = suggestion;
+                            helper.classList.remove('active');
+                            variantsInput.value = '';
+                            suggesterContainer.innerHTML = '';
+                            updateSearchString();
+                        };
+                        suggesterContainer.appendChild(suggestionBtn);
+                    }
+                }
+            });
+
+            if (!isFirst) {
+                termWrapper.querySelector('.remove-synonym-btn').addEventListener('click', (e) => {
+                    e.target.closest('.term-wrapper').remove();
+                    updateSearchString();
+                });
+            }
+            if (!isFirst) inputElement.focus();
+        };
+
+        const removeConceptGroup = (groupId) => {
+            const group = document.getElementById(groupId);
+            let previousElement = group.previousElementSibling;
+            if (previousElement && previousElement.classList.contains('group-connector')) {
+                 previousElement.remove();
+            }
+            group.remove();
+            updateSearchString();
+        };
+
+        const generateProximityString = (term) => {
+            term = term.trim();
+            if (!term) return '';
+            const stopWords = new Set(['a', 'an', 'and', 'the', 'of', 'in', 'to', 'or']);
+            const words = term.split(/\s+/).filter(word => !stopWords.has(word.toLowerCase()));
+
+            if (words.length > 1) {
+                const processedWords = words.map(word => {
+                    // Removed automatic truncation from here
+                    return word;
+                });
+                return processedWords.join(' /3 ');
+            }
+            return words.join('');
+        };
+        
+        const handlePhraseSuggestions = (inputElement) => {
+            const value = inputElement.value.trim();
+            const suggesterContainer = inputElement.parentElement.querySelector('.phrase-suggester-container');
+            
+            suggesterContainer.innerHTML = '';
+
+            if (value.includes(' ') && !value.match(/\s\/\d+\s/)) {
+                const suggestion = generateProximityString(value);
+                if(!suggestion) return;
+
+                const suggesterWrapper = document.createElement('div');
+                suggesterWrapper.className = 'flex items-center space-x-2';
+
+                const suggestionBtn = document.createElement('button');
+                suggestionBtn.textContent = `Use: ${suggestion}`;
+                suggestionBtn.className = "text-xs bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-md px-2 py-1 transition-all";
+                suggestionBtn.onclick = () => {
+                    inputElement.value = suggestion;
+                    suggesterContainer.innerHTML = '';
+                    updateSearchString();
+                };
+                
+                const tooltipHtml = `
+                    <div class="relative flex items-center group">
+                        <button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button>
+                        <div class="absolute bottom-full right-0 mb-2 w-72 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10">
+                            <p class="font-bold mb-1 text-sm">Phrase Searching</p>
+                            <p>Multi-word terms default to an exact phrase search (e.g., <strong>"assumption of risk"</strong>). For more flexibility, click the suggestion. This automatically removes common words (like 'of', 'the') and connects the rest within a few words of each other (e.g., creating <strong>assumption /3 risk</strong>). You can then manually add truncation where needed.</p>
+                            <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
+                        </div>
+                    </div>
+                `;
+
+                suggesterWrapper.appendChild(suggestionBtn);
+                const tooltipFragment = document.createRange().createContextualFragment(tooltipHtml);
+                suggesterWrapper.appendChild(tooltipFragment);
+                suggesterContainer.appendChild(suggesterWrapper);
+            }
+        };
+
+
+        const processTerm = (term) => {
+            term = term.trim();
+            if (!term) return '';
+
+            // If it's a proximity search (e.g., "assumption /3 risk"), wrap it in parentheses.
+            if (term.match(/\s\/\d+\s/)) {
+                return `(${term})`;
+            } 
+            // If it's a multi-word phrase without a connector, treat it as an exact phrase.
+            else if (term.includes(' ')) {
+                const sanitizedTerm = term.replace(/"/g, '\\"');
+                return `"${sanitizedTerm}"`;
+            }
+            
+            // Otherwise, it's a single term.
+            return term;
+        };
+
+        const updateSearchString = () => {
+            const groups = conceptContainer.querySelectorAll('.concept-group');
+            const connectors = conceptContainer.querySelectorAll('.connector-select');
+            let finalString = '';
+
+            groups.forEach((group, index) => {
+                const inputs = group.querySelectorAll('.concept-input');
+                const terms = Array.from(inputs)
+                    .map(input => input.value.trim())
+                    .filter(value => value !== '')
+                    .map(processTerm);
+
+                if (terms.length > 0) {
+                    const groupString = `(${terms.join(' OR ')})`;
+                    
+                    if (index > 0) {
+                        const connector = connectors[index - 1] ? ` ${connectors[index - 1].value} ` : ' AND ';
+                        finalString += connector;
+                    }
+                    finalString += groupString;
+                }
+            });
+
+            outputString.textContent = finalString.trim();
+        };
+        
+        const copyToClipboard = () => {
+            const textToCopy = outputString.textContent;
+            if(!textToCopy) return;
+
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                copyFeedback.classList.remove('opacity-0');
+                setTimeout(() => {
+                     copyFeedback.classList.add('opacity-0');
+                }, 2000);
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textArea);
+        };
+        
+        addConceptBtn.addEventListener('click', createConceptGroup);
+        copyBtn.addEventListener('click', copyToClipboard);
+        
+        conceptContainer.addEventListener('change', updateSearchString);
+        conceptContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-group-btn') || e.target.classList.contains('remove-synonym-btn')) {
+                 updateSearchString();
+            }
+        });
+
+        createConceptGroup();
+
+    </script>
+</body>
+</html>
+
+
+
