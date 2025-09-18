@@ -19,15 +19,20 @@
         .group-connector {
             flex-shrink: 0;
         }
-        .truncation-helper {
-            max-height: 0;
-            overflow: hidden;
-            transition: all 0.3s ease-in-out;
+        .connector-btn.active {
+            background-color: #3b82f6; /* bg-blue-500 */
+            color: white;
         }
-        .truncation-helper.active {
-            max-height: 150px; /* Adjust as needed */
-            margin-top: 0.75rem;
-            padding: 0.75rem;
+        .connector-btn.inactive {
+            background-color: #e5e7eb; /* bg-gray-200 */
+            color: #374151; /* text-gray-700 */
+        }
+         .connector-btn.inactive:hover {
+            background-color: #d1d5db; /* hover:bg-gray-300 */
+        }
+        /* Modal Styles */
+        #truncation-modal.hidden {
+            display: none;
         }
     </style>
 </head>
@@ -37,6 +42,7 @@
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Legal Boolean Search Builder</h1>
             <p class="text-md text-gray-600 mt-2">Create precise legal search strings, step-by-step.</p>
+            <p> Created by <a href="https://www.linkedin.com/in/rebeccafordon/" class="text-blue-600 hover:underline hover:text-blue-800">Rebecca Fordon</a></p>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -92,19 +98,56 @@
         </div>
     </div>
 
+    <!-- Truncation Builder Modal -->
+    <div id="truncation-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
+        <div class="relative mx-auto p-6 border w-full max-w-md shadow-lg rounded-xl bg-white">
+            <div class="text-center">
+                <h3 class="text-2xl font-semibold text-gray-900">Truncation Builder</h3>
+                <div class="mt-2 px-7 py-3">
+                    <p class="text-sm text-gray-500">
+                        Enter different forms of a word (e.g., `assume, assumed, assuming`), separated by a space, to find the common root. 
+                    </p>
+                    <input id="modal-variants-input" type="text" class="mt-4 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400" placeholder="Type variations separated by space or comma...">
+                </div>
+                <div id="modal-suggestion-area" class="mt-2 h-14">
+                    <!-- Suggestion will be injected here -->
+                </div>
+                <div class="items-center px-4 py-3">
+                    <button id="modal-close-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 w-full text-base font-medium">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-8 text-sm text-gray-500">
+        <p>
+            <a href="https://github.com/rlfordon/BooleanBuilder" target="_blank" rel="noopener noreferrer" class="hover:underline text-blue-600">View on GitHub</a>
+            <span class="mx-2">|</span>
+            Released under the <a href="https://github.com/rlfordon/BooleanBuilder/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="hover:underline text-blue-600">MIT License</a>.
+        </p>
+    </footer>
+
     <script>
         const conceptContainer = document.getElementById('concept-container');
         const addConceptBtn = document.getElementById('add-concept-btn');
         const outputString = document.getElementById('output-string');
         const copyBtn = document.getElementById('copy-btn');
         const copyFeedback = document.getElementById('copy-feedback');
+        
+        // Modal elements
+        const truncationModal = document.getElementById('truncation-modal');
+        const modalVariantsInput = document.getElementById('modal-variants-input');
+        const modalSuggestionArea = document.getElementById('modal-suggestion-area');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
 
         let conceptId = 0;
 
         const findCommonPrefix = (strs) => {
             if (!strs || strs.length === 0) return "";
-            strs = strs.filter(s => s && typeof s === 'string');
-            if (strs.length < 2) return strs.length === 1 ? strs[0] : "";
+            strs = strs.filter(s => s && typeof s === 'string' && s.length > 0);
+            if (strs.length < 2) return "";
             strs.sort();
             const firstStr = strs[0];
             const lastStr = strs[strs.length - 1];
@@ -125,29 +168,13 @@
             
             if (conceptId > 1) {
                 const connectorHtml = `
-                    <div class="my-4 p-4 rounded-lg bg-blue-50 border border-blue-200 text-center group-connector">
-                        <div class="flex items-center justify-center mb-2">
-                            <label class="block text-sm font-bold text-gray-700">Choose how to connect concepts:</label>
-                            
-                            <div class="relative flex items-center ml-2 group">
-                                <button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button>
-                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10">
-                                    <p class="font-bold mb-1 text-sm">Connector Strategy</p>
-                                    <p class="mb-2">How closely do you want the concepts to appear in a document?</p>
-                                    <ul class="list-none space-y-1">
-                                        <li><strong>AND:</strong> Broadest search. Good for unique terms.</li>
-                                        <li><strong>/p (paragraph):</strong> Good balance. Finds concepts discussed together.</li>
-                                        <li><strong>/s (sentence):</strong> Most restrictive. Finds concepts that are very closely linked.</li>
-                                    </ul>
-                                    <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
-                                </div>
-                            </div>
+                    <div class="my-4 p-4 rounded-lg bg-blue-50 border border-blue-200 text-center group-connector" data-connector="AND">
+                        <label class="block text-sm font-bold text-gray-700 mb-3">Choose how to connect concepts:</label>
+                        <div class="flex justify-center space-x-2 connector-buttons">
+                             <div class="relative group"><button class="connector-btn px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 active" data-value="AND">AND</button><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-800 text-white text-center text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10"><strong>Broadest search.</strong> Finds documents with your concepts anywhere in the text.<svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg></div></div>
+                             <div class="relative group"><button class="connector-btn px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 inactive" data-value="/p">/p (paragraph)</button><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-800 text-white text-center text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10">Finds concepts in the <strong>same paragraph</strong>. A good balance of precision and recall.<svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg></div></div>
+                             <div class="relative group"><button class="connector-btn px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-200 inactive" data-value="/s">/s (sentence)</button><div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-800 text-white text-center text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10"><strong>Most restrictive.</strong> Finds concepts in the <strong>same sentence</strong>.<svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg></div></div>
                         </div>
-                        <select class="connector-select bg-white border-gray-300 text-gray-900 text-sm font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-auto p-2.5 mx-auto">
-                            <option value="AND" selected>AND</option>
-                            <option value="/p">/p (same paragraph)</option>
-                            <option value="/s">/s (same sentence)</option>
-                        </select>
                     </div>
                 `;
                 const lastGroup = conceptContainer.lastElementChild;
@@ -162,38 +189,22 @@
                     <button class="remove-group-btn text-red-500 hover:text-red-700 font-semibold text-sm opacity-50 hover:opacity-100" data-group-id="${groupId}">Remove</button>
                 </div>
                  <div class="flex items-start text-xs text-gray-500 mb-3 -mt-2">
-                    <p>
-
-Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, injured, etc.). <br>For help with truncation (e.g., finding the right word root), click the <strong>(!)</strong> button next to any term.</p>
+                    <p>Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, injured, etc.). Need help finding a word's root? <button class="open-truncation-modal-btn text-blue-600 hover:text-blue-800 font-semibold underline">Build a Truncated Term</button></p>
                 </div>
                 <div class="space-y-2 synonym-inputs">
-                    <!-- Term inputs will be generated here -->
                 </div>
                 <div class="flex items-center mt-3">
                     <button class="add-synonym-btn text-sm font-medium text-blue-600 hover:text-blue-800">+ Add alternate term (OR)</button>
-                    <div class="relative flex items-center ml-2 group">
-                        <button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button>
-                        <div class="absolute top-full left-0 mt-2 w-64 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10">
-                            <p class="font-bold mb-1 text-sm">Brainstorming Terms</p>
-                            <p>Consider adding:</p>
-                            <ul class="list-disc list-inside pl-2 mt-1 space-y-1">
-                                <li><strong>Synonyms:</strong> e.g., child OR minor OR infant</li>
-                                <li><strong>Broader terms:</strong> e.g., car OR vehicle</li>
-                                <li><strong>Specific examples:</strong> e.g., "social media" OR twitter OR facebook OR snapchat</li>
-                                <li><strong>Narrower terms:</strong> e.g., accident OR "slip and fall"</li>
-                                <li><strong>Related concepts:</strong> e.g., marriage OR divorce</li>
-                            </ul>
-                            <svg class="absolute text-gray-800 h-2 w-full left-0 bottom-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,255 127.5,127.5 255,255"/></svg>
-                        </div>
-                    </div>
+                    <div class="relative flex items-center ml-2 group"><button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button><div class="absolute top-full left-0 mt-2 w-64 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10"><p class="font-bold mb-1 text-sm">Brainstorming Terms</p><p>Consider adding:</p><ul class="list-disc list-inside pl-2 mt-1 space-y-1"><li><strong>Synonyms:</strong> e.g., child OR minor OR infant</li><li><strong>Broader terms:</strong> e.g., car OR vehicle</li><li><strong>Specific examples:</strong> e.g., "social media" OR twitter OR facebook OR snapchat</li><li><strong>Narrower terms:</strong> e.g., accident OR "slip and fall"</li><li><strong>Related concepts:</strong> e.g., marriage OR divorce</li></ul><svg class="absolute text-gray-800 h-2 w-full left-0 bottom-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,255 127.5,127.5 255,255"/></svg></div></div>
                 </div>
             `;
             groupWrapper.innerHTML = groupHtml;
-            addTermInput(groupWrapper.querySelector('.synonym-inputs'), true); // Add the first term input
+            addTermInput(groupWrapper.querySelector('.synonym-inputs'), true);
             conceptContainer.appendChild(groupWrapper);
             
             groupWrapper.querySelector('.add-synonym-btn').addEventListener('click', () => addTermInput(groupWrapper.querySelector('.synonym-inputs'), false));
             groupWrapper.querySelector('.remove-group-btn').addEventListener('click', (e) => removeConceptGroup(e.target.dataset.groupId));
+            groupWrapper.querySelector('.open-truncation-modal-btn').addEventListener('click', openTruncationModal);
 
             updateSearchString();
         };
@@ -208,54 +219,16 @@ Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, 
                     ${isFirst ? '' : '<button class="remove-synonym-btn text-gray-400 hover:text-gray-600 p-1 remove-btn">&times;</button>'}
                     <div class="relative flex-grow flex items-center">
                         <input type="text" class="concept-input w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400" placeholder="${isFirst ? 'Enter term or phrase' : 'Alternate term'}">
-                        <div class="phrase-suggester-container absolute right-10 top-1/2 -translate-y-1/2"></div>
-                        <button class="truncation-toggle-btn absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold hover:bg-gray-300">(!)</button>
+                        <div class="phrase-suggester-container absolute right-2 top-1/2 -translate-y-1/2"></div>
                     </div>
-                </div>
-                <div class="truncation-helper bg-gray-100 rounded-md border border-gray-200">
-                    <input type="text" class="truncation-variants-input w-full p-1.5 border border-gray-300 rounded-md text-sm" placeholder="Enter variations (e.g., assume, assumed)...">
-                    <div class="truncation-suggester-container mt-2"></div>
                 </div>
             `;
             container.appendChild(termWrapper);
 
             const inputElement = termWrapper.querySelector('.concept-input');
-            const toggleBtn = termWrapper.querySelector('.truncation-toggle-btn');
-            const helper = termWrapper.querySelector('.truncation-helper');
-            const variantsInput = termWrapper.querySelector('.truncation-variants-input');
-
             inputElement.addEventListener('input', (e) => {
                 updateSearchString();
                 handlePhraseSuggestions(e.target);
-            });
-            
-            toggleBtn.addEventListener('click', () => helper.classList.toggle('active'));
-
-            variantsInput.addEventListener('input', () => {
-                const suggesterContainer = helper.querySelector('.truncation-suggester-container');
-                suggesterContainer.innerHTML = ''; // Clear old suggestions
-
-                const originalTerm = inputElement.value.trim().toLowerCase();
-                const variants = variantsInput.value.trim().toLowerCase().split(/[\s,]+/).filter(Boolean);
-                const allTerms = [originalTerm, ...variants];
-
-                if (allTerms.length >= 2) {
-                    const prefix = findCommonPrefix(allTerms);
-                    if (prefix.length > 2) {
-                        const suggestion = prefix + '!';
-                        const suggestionBtn = document.createElement('button');
-                        suggestionBtn.className = "text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-md px-3 py-1.5 transition-all w-full text-left";
-                        suggestionBtn.innerHTML = `Use suggested root: <strong class="font-semibold">${suggestion}</strong>`;
-                        suggestionBtn.onclick = () => {
-                            inputElement.value = suggestion;
-                            helper.classList.remove('active');
-                            variantsInput.value = '';
-                            suggesterContainer.innerHTML = '';
-                            updateSearchString();
-                        };
-                        suggesterContainer.appendChild(suggestionBtn);
-                    }
-                }
             });
 
             if (!isFirst) {
@@ -282,15 +255,7 @@ Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, 
             if (!term) return '';
             const stopWords = new Set(['a', 'an', 'and', 'the', 'of', 'in', 'to', 'or']);
             const words = term.split(/\s+/).filter(word => !stopWords.has(word.toLowerCase()));
-
-            if (words.length > 1) {
-                const processedWords = words.map(word => {
-                    // Removed automatic truncation from here
-                    return word;
-                });
-                return processedWords.join(' /3 ');
-            }
-            return words.join('');
+            return words.length > 1 ? words.join(' /3 ') : words.join('');
         };
         
         const handlePhraseSuggestions = (inputElement) => {
@@ -315,97 +280,122 @@ Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, 
                     updateSearchString();
                 };
                 
-                const tooltipHtml = `
-                    <div class="relative flex items-center group">
-                        <button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button>
-                        <div class="absolute bottom-full right-0 mb-2 w-72 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10">
-                            <p class="font-bold mb-1 text-sm">Phrase Searching</p>
-                            <p>Multi-word terms default to an exact phrase search (e.g., <strong>"assumption of risk"</strong>). For more flexibility, click the suggestion. This automatically removes common words (like 'of', 'the') and connects the rest within a few words of each other (e.g., creating <strong>assumption /3 risk</strong>). You can then manually add truncation where needed.</p>
-                            <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
-                        </div>
-                    </div>
-                `;
+                const tooltipHtml = `<div class="relative flex items-center group"><button class="h-5 w-5 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold group-hover:bg-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400">?</button><div class="absolute bottom-full right-0 mb-2 w-72 bg-gray-800 text-white text-left text-xs rounded-lg py-2 px-3 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-300 pointer-events-none z-10"><p class="font-bold mb-1 text-sm">Phrase Searching</p><p>Multi-word terms default to an exact phrase search (e.g., <strong>"assumption of risk"</strong>). For more flexibility, click the suggestion. This automatically removes common words (like 'of', 'the') and connects the rest within a few words of each other (e.g., creating <strong>assumption /3 risk</strong>). You can then manually add truncation where needed.</p><svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg></div></div>`;
 
                 suggesterWrapper.appendChild(suggestionBtn);
-                const tooltipFragment = document.createRange().createContextualFragment(tooltipHtml);
-                suggesterWrapper.appendChild(tooltipFragment);
+                suggesterWrapper.insertAdjacentHTML('beforeend', tooltipHtml);
                 suggesterContainer.appendChild(suggesterWrapper);
             }
         };
 
-
         const processTerm = (term) => {
             term = term.trim();
             if (!term) return '';
-
-            // If it's a proximity search (e.g., "assumption /3 risk"), wrap it in parentheses.
-            if (term.match(/\s\/\d+\s/)) {
-                return `(${term})`;
-            } 
-            // If it's a multi-word phrase without a connector, treat it as an exact phrase.
-            else if (term.includes(' ')) {
-                const sanitizedTerm = term.replace(/"/g, '\\"');
-                return `"${sanitizedTerm}"`;
-            }
-            
-            // Otherwise, it's a single term.
+            if (term.match(/\s\/\d+\s/)) return `(${term})`;
+            if (term.includes(' ')) return `"${term.replace(/"/g, '\\"')}"`;
             return term;
         };
 
         const updateSearchString = () => {
             const groups = conceptContainer.querySelectorAll('.concept-group');
-            const connectors = conceptContainer.querySelectorAll('.connector-select');
+            const connectors = conceptContainer.querySelectorAll('.group-connector');
             let finalString = '';
 
             groups.forEach((group, index) => {
-                const inputs = group.querySelectorAll('.concept-input');
-                const terms = Array.from(inputs)
+                const terms = Array.from(group.querySelectorAll('.concept-input'))
                     .map(input => input.value.trim())
                     .filter(value => value !== '')
                     .map(processTerm);
-
                 if (terms.length > 0) {
                     const groupString = `(${terms.join(' OR ')})`;
-                    
                     if (index > 0) {
-                        const connector = connectors[index - 1] ? ` ${connectors[index - 1].value} ` : ' AND ';
-                        finalString += connector;
+                        const connectorEl = connectors[index - 1];
+                        finalString += connectorEl ? ` ${connectorEl.dataset.connector} ` : ' AND ';
                     }
                     finalString += groupString;
                 }
             });
-
             outputString.textContent = finalString.trim();
         };
         
-        const copyToClipboard = () => {
-            const textToCopy = outputString.textContent;
+        const copyToClipboard = (textToCopy, feedbackEl) => {
             if(!textToCopy) return;
-
             const textArea = document.createElement("textarea");
             textArea.value = textToCopy;
-            textArea.style.position = "fixed";
             document.body.appendChild(textArea);
-            textArea.focus();
             textArea.select();
             try {
                 document.execCommand('copy');
-                copyFeedback.classList.remove('opacity-0');
-                setTimeout(() => {
-                     copyFeedback.classList.add('opacity-0');
-                }, 2000);
+                if (feedbackEl) {
+                    const originalText = feedbackEl.innerHTML;
+                    feedbackEl.textContent = 'Copied!';
+                    feedbackEl.disabled = true;
+                    setTimeout(() => {
+                        feedbackEl.innerHTML = originalText;
+                        feedbackEl.disabled = false;
+                    }, 1500);
+                } else {
+                    copyFeedback.classList.remove('opacity-0');
+                    setTimeout(() => copyFeedback.classList.add('opacity-0'), 2000);
+                }
             } catch (err) {
-                console.error('Fallback: Oops, unable to copy', err);
+                console.error('Failed to copy: ', err);
+                if (feedbackEl) feedbackEl.textContent = 'Copy Failed!';
             }
             document.body.removeChild(textArea);
         };
+
+        // Modal Logic
+        const openTruncationModal = () => {
+            modalVariantsInput.value = '';
+            modalSuggestionArea.innerHTML = '';
+            truncationModal.classList.remove('hidden');
+            modalVariantsInput.focus();
+        };
+
+        const closeTruncationModal = () => truncationModal.classList.add('hidden');
+
+        modalVariantsInput.addEventListener('input', () => {
+            const variants = modalVariantsInput.value.trim().toLowerCase().split(/[\s,]+/).filter(Boolean);
+            modalSuggestionArea.innerHTML = '';
+            if (variants.length >= 2) {
+                const prefix = findCommonPrefix(variants);
+                if (prefix.length > 2) {
+                    const suggestion = prefix + '!';
+                    const suggestionBtn = document.createElement('button');
+                    suggestionBtn.className = "text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-md px-3 py-1.5 transition-all w-full text-left";
+                    suggestionBtn.innerHTML = `Copy suggested root: <strong class="font-semibold">${suggestion}</strong>`;
+                    suggestionBtn.onclick = () => copyToClipboard(suggestion, suggestionBtn);
+                    modalSuggestionArea.appendChild(suggestionBtn);
+                }
+            }
+        });
+
+        modalCloseBtn.addEventListener('click', closeTruncationModal);
+        truncationModal.addEventListener('click', (e) => {
+            if (e.target === truncationModal) closeTruncationModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "Escape" && !truncationModal.classList.contains('hidden')) {
+                closeTruncationModal();
+            }
+        });
         
         addConceptBtn.addEventListener('click', createConceptGroup);
-        copyBtn.addEventListener('click', copyToClipboard);
+        copyBtn.addEventListener('click', () => copyToClipboard(outputString.textContent));
         
         conceptContainer.addEventListener('change', updateSearchString);
         conceptContainer.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-group-btn') || e.target.classList.contains('remove-synonym-btn')) {
+            if (e.target.classList.contains('connector-btn')) {
+                const button = e.target;
+                const connectorGroup = button.closest('.group-connector');
+                connectorGroup.dataset.connector = button.dataset.value;
+                connectorGroup.querySelectorAll('.connector-btn').forEach(btn => {
+                    btn.classList.remove('active', 'inactive');
+                    btn.classList.add(btn === button ? 'active' : 'inactive');
+                });
+                updateSearchString();
+            } else if (e.target.classList.contains('remove-group-btn') || e.target.classList.contains('remove-synonym-btn')) {
                  updateSearchString();
             }
         });
@@ -415,6 +405,4 @@ Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, 
     </script>
 </body>
 </html>
-
-
 
