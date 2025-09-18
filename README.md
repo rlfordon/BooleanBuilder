@@ -25,7 +25,7 @@ Boolean search with terms and connectors is the gold standard for precision in l
 1.  **Open the File:** Download the `boolean_search_builder.html` file and open it in any modern web browser.
 2.  **Build Your First Concept:** Start by typing your first key term or phrase into the "Concept 1" input box.
 3.  **Add Alternate Terms:** Use the `+ Add alternate term (OR)` button to add synonyms or related keywords for that concept.
-4.  **Get Help with Truncation:** Click the `(!)` button next to any term to open a helper that suggests a truncated root based on variations you provide.
+4.  **Get Help with Truncation:** Click the `Build a Truncated Term` button to open a helper that suggests a truncated root based on variations you provide.
 5.  **Add More Concepts:** Click the `+ Add Concept Group` button to create a new concept.
 6.  **Connect Your Concepts:** Use the `AND`, `/p`, or `/s` buttons that appear between concept groups to define how they relate to each other.
 7.  **Review Your String:** As you work, your complete Boolean search string is built in the "Your Search String" panel on the right.
@@ -36,6 +36,10 @@ Boolean search with terms and connectors is the gold standard for precision in l
 -   **HTML5:** For the core structure of the application.
 -   **Tailwind CSS:** For modern, responsive styling.
 -   **JavaScript (ES6):** For all interactive logic and DOM manipulation, with no external libraries or frameworks.
+
+## Acknowledgments
+
+A special thank you Charlie Amiot and Debbie Ginsberg for their invaluable feedback, ideas, and testing that helped shape this tool. 
 
 ## Contributing
 
