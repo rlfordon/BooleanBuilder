@@ -49,7 +49,7 @@
             <!-- Left Column: Input Controls -->
             <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-200">
                 <h2 class="text-2xl font-semibold mb-4 text-gray-800">1. Build Your Concepts</h2>
-                <p class="text-sm text-gray-600 -mt-2 mb-4">A concept is a main idea, party, action, or legal issue. Group synonyms for the same concept together (e.g., `spectator` OR `fan`).</p>
+                <p class="text-sm text-gray-600 -mt-2 mb-4">A concept is a main idea, party, action, or legal issue. This tool will help you group synonyms for the same concept together (e.g., <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">spectator OR fan</code>.</p>
                 <div id="concept-container" class="space-y-6">
                     <!-- Concept groups will be dynamically inserted here -->
                 </div>
@@ -86,7 +86,7 @@
                         </div>
                         <div class="flex items-start">
                             <input id="check-truncation" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 flex-shrink-0">
-                            <label for="check-truncation" class="ml-3 text-sm text-gray-700"><strong>Truncation:</strong> Is my use of <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">!</code> capturing the right word endings without being too broad (e.g., <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">defen!</code> is better than <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">def!</code>) or too narrow (e.g., <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">assum!</code> is better than <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">assump!</code>)?</label>
+                            <label for="check-truncation" class="ml-3 text-sm text-gray-700"><strong>Truncation:</strong> Is my use of <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">!</code> capturing all variations? Be careful that the root isn't too <strong>broad</strong> (e.g., <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">defin!</code> finds <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">definition</code> and <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">define</code>, but also <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">definite</code> and <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">definitive</code>) or too <strong>narrow</strong> (e.g., <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">migrat!</code> finds <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">migration</code> and <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">migrate</code>, but misses <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">migrant</code>).</label>
                         </div>
                         <div class="flex items-start">
                             <input id="check-connectors" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mt-1 flex-shrink-0">
@@ -105,7 +105,7 @@
                 <h3 class="text-2xl font-semibold text-gray-900">Truncation Builder</h3>
                 <div class="mt-2 px-7 py-3">
                     <p class="text-sm text-gray-500">
-                        Enter different forms of a word (e.g., `assume, assumed, assuming`), separated by a space, to find the common root. 
+                        Enter different forms of a word (e.g., <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">assume</code>, <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">assumed</code>, <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">assuming</code>),separated by a space, to find the common root. 
                     </p>
                     <input id="modal-variants-input" type="text" class="mt-4 w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-400" placeholder="Type variations separated by space or comma...">
                 </div>
@@ -196,7 +196,7 @@
                     <button class="remove-group-btn text-red-500 hover:text-red-700 font-semibold text-sm opacity-50 hover:opacity-100" data-group-id="${groupId}">Remove</button>
                 </div>
                  <div class="flex items-start text-xs text-gray-500 mb-3 -mt-2">
-                    <p>Tip: Use ! at the end of a word root for truncation (e.g., injur! finds injury, injured, etc.). Need help finding a word's root? <button class="open-truncation-modal-btn text-blue-600 hover:text-blue-800 font-semibold underline">Build a Truncated Term</button></p>
+                    <p>Tip: Use <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">!</code> at the end of a word root for truncation (e.g., <code class="bg-gray-200 text-gray-700 font-mono text-xs px-1.5 py-0.5 rounded">injur!</code> finds injury, injured, etc.). Need help finding a word's root? <button class="open-truncation-modal-btn text-blue-600 hover:text-blue-800 font-semibold underline">Build a Truncated Term</button></p>
                 </div>
                 <div class="space-y-2 synonym-inputs">
                 </div>
