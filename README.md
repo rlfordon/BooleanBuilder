@@ -24,7 +24,7 @@ Boolean search with terms and connectors is the gold standard for precision in l
 
 ## How to Use
 
-1.  **Open the File:** Download the `boolean_search_builder.html` file and open it in any modern web browser.
+1.  **Open the File:** Download the `boolean_search_builder.html` file and open it in any modern web browser. Or access at [https://booleanbuilder.replit.app/](https://booleanbuilder.replit.app/).
 2.  **Build Your First Concept:** Start by typing your first key term or phrase into the "Concept 1" input box.
 3.  **Add Alternate Terms:** Use the `+ Add alternate term (OR)` button to add synonyms or related keywords for that concept.
 4.  **Get Help with Truncation:** Click the `Build a Truncated Term` button to open a helper that suggests a truncated root based on variations you provide.
