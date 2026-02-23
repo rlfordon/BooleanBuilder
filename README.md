@@ -4,6 +4,8 @@ An interactive, single-page web tool designed to help law students, legal resear
 
 This tool demystifies the process of creating complex queries by guiding the user through a logical, step-by-step workflow, inspired by best practices in legal research methodology.
 
+Access at: [https://booleanbuilder.replit.app/](https://booleanbuilder.replit.app/).
+
 
 ## The Problem It Solves
 
