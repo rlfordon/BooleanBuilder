@@ -17,14 +17,15 @@ Boolean search with terms and connectors is the gold standard for precision in l
 -   **Guided Brainstorming:** Contextual tips encourage users to add alternate terms and synonyms, which are automatically joined with the `OR` connector.
 -   **Smart Phrase Suggestions:** Automatically converts multi-word phrases (e.g., "assumption of risk") into a more flexible proximity search (e.g., `(assumption /3 risk)`), filtering out common stop words.
 -   **Interactive Truncation Helper:** A word-by-word helper assists users in finding the correct root for truncation (`!`), preventing overly broad or narrow stems.
--   **Clear Connector Choices:** A highly visible button-based interface with hover tips makes it easy to choose between `AND`, `/p` (same paragraph), and `/s` (same sentence).
+-   **Clear Connector Choices:** A highly visible button-based interface makes it easy to choose between `AND`, `/p` (same paragraph), and `/s` (same sentence), with explanatory tips that appear on hover *or keyboard focus*.
 -   **Live Search String Preview:** See your Boolean query being built in real-time in a dedicated output panel.
 -   **Final Review Checklist:** An interactive checklist guides users through a final review of their search string to ensure proper grouping, truncation, and connector usage before running the search.
--   **Single-File Application:** The entire tool is self-contained in a single HTML file, requiring no installation or dependencies.
+-   **Genuinely Single-File:** Markup, styles, and logic are self-contained in one HTML file. No installation, no build step to run it, and no network requests at all — it works offline, from a thumb drive, on a plane.
+-   **Accessible:** Built to WCAG 2.1 AA. See below.
 
 ## How to Use
 
-1.  **Open the File:** Download the `boolean_search_builder.html` file and open it in any modern web browser. Or access at [https://booleanbuilder.replit.app/](https://booleanbuilder.replit.app/).
+1.  **Open the File:** Download `index.html` and open it in any modern web browser — no install, no server, no internet connection required. Or access at [https://booleanbuilder.replit.app/](https://booleanbuilder.replit.app/).
 2.  **Build Your First Concept:** Start by typing your first key term or phrase into the "Concept 1" input box.
 3.  **Add Alternate Terms:** Use the `+ Add alternate term (OR)` button to add synonyms or related keywords for that concept.
 4.  **Get Help with Truncation:** Click the `Build a Truncated Term` button to open a helper that suggests a truncated root based on variations you provide.
@@ -36,8 +37,31 @@ Boolean search with terms and connectors is the gold standard for precision in l
 ## Technology Stack
 
 -   **HTML5:** For the core structure of the application.
--   **Tailwind CSS:** For modern, responsive styling.
+-   **Tailwind CSS (precompiled):** Only the ~180 utilities this page actually uses are generated and inlined, so there is no CDN runtime fetched at page load.
 -   **JavaScript (ES6):** For all interactive logic and DOM manipulation, with no external libraries or frameworks.
+
+## Accessibility
+
+The tool targets **WCAG 2.1 Level AA**. This matters if you work at a public institution: DOJ's April 2024 Title II rule adopts WCAG 2.1 AA as the technical standard for state and local government entities, which includes public universities and government libraries.
+
+-   Every control has a meaningful accessible name, including the dynamically generated term inputs, which are labelled by position ("Concept 2, alternate term 3") and renumber as concepts are added and removed.
+-   The generated search string is announced through a polite live region, debounced so screen reader users hear the settled string rather than one fragment per keystroke.
+-   All tips and explanations are reachable by keyboard, not hover only.
+-   The truncation helper is a proper modal dialog: it traps Tab, closes on Escape, and returns focus to the control that opened it.
+-   All text and focus indicators meet or exceed AA contrast.
+
+**Caveat, stated plainly:** this was verified programmatically and by keyboard, *not* with a real screen reader. If you use NVDA, JAWS, VoiceOver, or anything else and something reads badly, please open an issue — that feedback is worth more than the audit.
+
+## Development
+
+The Tailwind utilities are generated at build time rather than fetched from a CDN. If you add or change a Tailwind class, regenerate the stylesheet:
+
+```bash
+printf '@tailwind base;\n@tailwind components;\n@tailwind utilities;\n' > in.css
+npx tailwindcss@3 -i in.css -o out.css --minify --content index.html
+```
+
+then replace the contents of the generated `<style>` block in `index.html` with the new `out.css`.
 
 ## Acknowledgments
 
