@@ -4,7 +4,7 @@ An interactive, single-page web tool designed to help law students, legal resear
 
 This tool demystifies the process of creating complex queries by guiding the user through a logical, step-by-step workflow, inspired by best practices in legal research methodology.
 
-Access at: [https://booleanbuilder.replit.app/](https://booleanbuilder.replit.app/).
+Access at: [https://rlfordon.github.io/BooleanBuilder/](https://rlfordon.github.io/BooleanBuilder/).
 
 
 ## The Problem It Solves
@@ -25,7 +25,7 @@ Boolean search with terms and connectors is the gold standard for precision in l
 
 ## How to Use
 
-1.  **Open the File:** Download `index.html` and open it in any modern web browser — no install, no server, no internet connection required. Or access at [https://booleanbuilder.replit.app/](https://booleanbuilder.replit.app/).
+1.  **Open the File:** Download `index.html` and open it in any modern web browser — no install, no server, no internet connection required. Or access at [https://rlfordon.github.io/BooleanBuilder/](https://rlfordon.github.io/BooleanBuilder/).
 2.  **Build Your First Concept:** Start by typing your first key term or phrase into the "Concept 1" input box.
 3.  **Add Alternate Terms:** Use the `+ Add alternate term (OR)` button to add synonyms or related keywords for that concept.
 4.  **Get Help with Truncation:** Click the `Build a Truncated Term` button to open a helper that suggests a truncated root based on variations you provide.
